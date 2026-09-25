@@ -3,6 +3,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 import { ProfileWizard } from './ProfileWizard'
+import { I18nProvider } from '../i18n'
 import { BulkCreate } from './BulkCreate'
 import { createFoxmaskMock, fixtureProfile } from '../test/mock-foxmask'
 
@@ -31,19 +32,19 @@ afterEach(() => {
 
 describe('ProfileWizard — create mode', () => {
   it('blocks Next on the Basics step until the name is filled', async () => {
-    render(<ProfileWizard initial={null} onClose={noop} onSaved={noop} />)
+    render(<I18nProvider><ProfileWizard initial={null} onClose={noop} onSaved={noop}  /></I18nProvider>)
 
     const next = screen.getByRole('button', { name: /next/i })
     expect(next).toBeDisabled()
 
-    fireEvent.change(screen.getByLabelText('Profile name'), { target: { value: 'Wizard Test' } })
+    fireEvent.change(screen.getByLabelText('Name *'), { target: { value: 'Wizard Test' } })
     expect(next).not.toBeDisabled()
   })
 
   it('previews the fingerprint and regenerates on demand', async () => {
-    render(<ProfileWizard initial={null} onClose={noop} onSaved={noop} />)
+    render(<I18nProvider><ProfileWizard initial={null} onClose={noop} onSaved={noop}  /></I18nProvider>)
 
-    fireEvent.change(screen.getByLabelText('Profile name'), { target: { value: 'W' } })
+    fireEvent.change(screen.getByLabelText('Name *'), { target: { value: 'W' } })
     fireEvent.click(screen.getByRole('button', { name: /next/i }))
 
     expect(await screen.findByText(/User-Agent/)).toBeInTheDocument()
@@ -59,9 +60,9 @@ describe('ProfileWizard — create mode', () => {
   it('submits create() with the form values on the review step', async () => {
     foxmask.profiles.create.mockResolvedValue(fixtureProfile({ id: 'new', name: 'Wizard Test' }))
 
-    render(<ProfileWizard initial={null} onClose={noop} onSaved={noop} />)
-    fireEvent.change(screen.getByLabelText('Profile name'), { target: { value: 'Wizard Test' } })
-    fireEvent.change(screen.getByLabelText('Tags'), { target: { value: 'a, b' } })
+    render(<I18nProvider><ProfileWizard initial={null} onClose={noop} onSaved={noop}  /></I18nProvider>)
+    fireEvent.change(screen.getByLabelText('Name *'), { target: { value: 'Wizard Test' } })
+    fireEvent.change(screen.getByLabelText(/Tags \(comma separated\)/), { target: { value: 'a, b' } })
 
     // Basics → Fingerprint → Proxy → Review
     fireEvent.click(screen.getByRole('button', { name: /next/i }))
@@ -85,10 +86,10 @@ describe('ProfileWizard — edit mode', () => {
     const initial = fixtureProfile({ id: 'p9', name: 'Original' })
     foxmask.profiles.update.mockResolvedValue({ ...initial, name: 'Renamed' })
 
-    render(<ProfileWizard initial={initial} onClose={noop} onSaved={noop} />)
-    expect(screen.getByText(/edit “original”/i)).toBeInTheDocument()
+    render(<I18nProvider><ProfileWizard initial={initial} onClose={noop} onSaved={noop}  /></I18nProvider>)
+    expect(screen.getByText(/edit .original./i)).toBeInTheDocument()
 
-    fireEvent.change(screen.getByLabelText('Profile name'), { target: { value: 'Renamed' } })
+    fireEvent.change(screen.getByLabelText('Name *'), { target: { value: 'Renamed' } })
     // Basics → Proxy (fingerprint frozen at creation; step skipped in edit)
     fireEvent.click(screen.getByRole('button', { name: /next/i }))
     fireEvent.click(screen.getByRole('button', { name: /next/i }))
@@ -106,8 +107,8 @@ describe('BulkCreate', () => {
       fixtureProfile({ id: input.name, name: input.name })
     )
 
-    render(<BulkCreate onClose={noop} onDone={noop} />)
-    fireEvent.change(screen.getByLabelText('Count'), { target: { value: '3' } })
+    render(<I18nProvider><BulkCreate onClose={noop} onDone={noop} /></I18nProvider>)
+    fireEvent.change(screen.getByLabelText(/Count \(1–100\)/), { target: { value: '3' } })
     fireEvent.click(screen.getByRole('button', { name: /create 3 profiles/i }))
 
     await waitFor(() => expect(foxmask.profiles.create).toHaveBeenCalledTimes(3))

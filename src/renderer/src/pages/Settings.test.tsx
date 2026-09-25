@@ -3,6 +3,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 import { Settings } from './Settings'
+import { I18nProvider } from '../i18n'
 import { createFoxmaskMock } from '../test/mock-foxmask'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -36,16 +37,16 @@ afterEach(() => {
 
 describe('Settings page', () => {
   it('loads and renders current settings', async () => {
-    render(<Settings />)
-    expect(await screen.findByLabelText('API port')).toHaveValue(35000)
-    expect(screen.getByLabelText('Launch at login')).not.toBeChecked()
+    render(<I18nProvider><Settings /></I18nProvider>)
+    expect(await screen.findByLabelText(/API port/)).toHaveValue(35000)
+    expect(screen.getByLabelText(/Launch Foxmask at login/)).not.toBeChecked()
   })
 
   it('saves the edited settings via settings.set', async () => {
-    render(<Settings />)
-    const port = await screen.findByLabelText('API port')
+    render(<I18nProvider><Settings /></I18nProvider>)
+    const port = await screen.findByLabelText(/API port/)
     fireEvent.change(port, { target: { value: '36000' } })
-    const login = screen.getByLabelText('Launch at login')
+    const login = screen.getByLabelText(/Launch Foxmask at login/)
     fireEvent.click(login)
 
     fireEvent.click(screen.getByRole('button', { name: /save settings/i }))

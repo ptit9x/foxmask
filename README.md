@@ -4,7 +4,15 @@ An antidetect browser for managing isolated profiles with unique, seeded
 fingerprints, per-profile proxies, and a local REST API for Selenium /
 Playwright automation. Desktop app built with Electron + React + TypeScript.
 
-![Profiles](docs/screenshots/profiles.png)
+**English**
+
+![Profiles (EN)](docs/screenshots/profiles-en.png)
+
+**Tiếng Việt**
+
+![Profiles (VI)](docs/screenshots/profiles-vi.png)
+
+**Create wizard — fingerprint preview · proxy test**
 
 ![Create wizard — fingerprint preview](docs/screenshots/wizard.png)
 

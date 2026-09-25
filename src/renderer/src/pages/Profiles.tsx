@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import type { Profile } from '../../../main/types/profile'
 import type { LauncherStatus } from '../../../main/api/server'
 import { ProfileTable } from '../components/ProfileTable'
+import { Tip } from '../components/Tip'
+import { useI18n } from '../i18n'
 
 /**
  * Profiles list page: toolbar (search / group filter / create / bulk create),
@@ -26,6 +28,7 @@ interface ListState {
 const STOPPED: LauncherStatus = { running: false, wsEndpoint: null, debugPort: null, startedAt: null }
 
 export function Profiles({ onCreate, onEdit, onBulkCreate }: ProfilesPageProps): React.JSX.Element {
+  const { t } = useI18n()
   const [list, setList] = useState<ListState | null>(null)
   const [statuses, setStatuses] = useState<Record<string, LauncherStatus>>({})
   const [loading, setLoading] = useState(true)
@@ -151,7 +154,7 @@ export function Profiles({ onCreate, onEdit, onBulkCreate }: ProfilesPageProps):
   }
 
   const handleDelete = (profile: Profile): void => {
-    if (!window.confirm(`Delete profile "${profile.name}"? This cannot be undone.`)) return
+    if (!window.confirm(t('profiles.deleteConfirm', { name: profile.name }))) return
     markBusy(profile.id, true)
     void (async (): Promise<void> => {
       try {
@@ -198,8 +201,8 @@ export function Profiles({ onCreate, onEdit, onBulkCreate }: ProfilesPageProps):
           const text = await file.text()
           const outcome = await window.foxmask.profiles.import(text)
           const summary =
-            `Imported ${outcome.imported.length}` +
-            (outcome.skipped.length > 0 ? `, skipped ${outcome.skipped.length}` : '')
+            t('profiles.imported', { count: outcome.imported.length }) +
+            (outcome.skipped.length > 0 ? t('profiles.skipped', { count: outcome.skipped.length }) : '')
           window.alert(summary)
           await fetchPage(page, search)
         } catch (err) {
@@ -212,11 +215,12 @@ export function Profiles({ onCreate, onEdit, onBulkCreate }: ProfilesPageProps):
 
   return (
     <div className="page">
+      <Tip tipKey="tip.profiles" />
       <div className="toolbar">
         <input
-          aria-label="Search profiles"
+          aria-label={t('toolbar.search')}
           className="input search"
-          placeholder="Search profiles…"
+          placeholder={t('toolbar.search')}
           value={search}
           onChange={(e) => {
             setSearch(e.target.value)
@@ -224,12 +228,12 @@ export function Profiles({ onCreate, onEdit, onBulkCreate }: ProfilesPageProps):
           }}
         />
         <select
-          aria-label="Filter by group"
+          aria-label={t('toolbar.allGroups')}
           className="input select"
           value={group}
           onChange={(e) => setGroup(e.target.value)}
         >
-          <option value="">All groups</option>
+          <option value="">{t('toolbar.allGroups')}</option>
           {groups.map((g) => (
             <option key={g} value={g}>
               {g}
@@ -237,17 +241,27 @@ export function Profiles({ onCreate, onEdit, onBulkCreate }: ProfilesPageProps):
           ))}
         </select>
         <div className="spacer" />
-        <button type="button" className="btn ghost" onClick={handleImport} title="Import profiles from JSON">
-          Import
+        <button
+          type="button"
+          className="btn ghost"
+          onClick={handleImport}
+          title={t('tip.importExport')}
+        >
+          ⬆️ {t('toolbar.import')}
         </button>
-        <button type="button" className="btn ghost" onClick={() => void handleExport()} title="Export all profiles to JSON">
-          Export
+        <button
+          type="button"
+          className="btn ghost"
+          onClick={() => void handleExport()}
+          title={t('tip.importExport')}
+        >
+          ⬇️ {t('toolbar.export')}
         </button>
         <button type="button" className="btn ghost" onClick={onBulkCreate}>
-          Bulk create
+          ✨ {t('toolbar.bulkCreate')}
         </button>
         <button type="button" className="btn primary" onClick={onCreate}>
-          Create profile
+          ➕ {t('toolbar.create')}
         </button>
       </div>
 
@@ -258,20 +272,20 @@ export function Profiles({ onCreate, onEdit, onBulkCreate }: ProfilesPageProps):
       )}
       {error && (
         <div role="alert" className="banner error">
-          Failed to load profiles: {error}
+          {t('profiles.errorPrefix')} {error}
           <button type="button" className="btn ghost" onClick={retry}>
-            Retry
+            {t('profiles.retry')}
           </button>
         </div>
       )}
 
       {loading ? (
-        <div className="empty">Loading profiles…</div>
+        <div className="empty">{t('profiles.loading')}</div>
       ) : error ? null : visibleRows.length === 0 ? (
         <div className="empty">
-          <p>No profiles yet.</p>
+          <p>{t('profiles.empty.title')}</p>
           <button type="button" className="btn primary" onClick={onCreate}>
-            Create profile
+            ➕ {t('toolbar.create')}
           </button>
         </div>
       ) : (
@@ -295,10 +309,14 @@ export function Profiles({ onCreate, onEdit, onBulkCreate }: ProfilesPageProps):
             disabled={page <= 1 || loading}
             onClick={() => setPage((p) => Math.max(1, p - 1))}
           >
-            ‹ Prev
+            {t('profiles.prev')}
           </button>
           <span className="page-indicator">
-            Page {page} / {Math.max(1, list.lastPage)} · {list.total} profiles
+            {t('profiles.pagination', {
+              page,
+              last: Math.max(1, list.lastPage),
+              total: list.total
+            })}
           </span>
           <button
             type="button"
@@ -306,7 +324,7 @@ export function Profiles({ onCreate, onEdit, onBulkCreate }: ProfilesPageProps):
             disabled={page >= list.lastPage || loading}
             onClick={() => setPage((p) => p + 1)}
           >
-            Next ›
+            {t('profiles.next')}
           </button>
         </div>
       )}

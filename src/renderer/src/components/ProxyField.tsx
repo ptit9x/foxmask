@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import type { ProxyCheckResult } from '../../../main/proxy/check'
+import { useI18n } from '../i18n'
 
 /**
  * Proxy input with a live Test button: pastes a raw proxy URL, checks it via
@@ -12,6 +13,7 @@ interface ProxyFieldProps {
 }
 
 export function ProxyField({ value, onChange }: ProxyFieldProps): React.JSX.Element {
+  const { t } = useI18n()
   const [checking, setChecking] = useState(false)
   const [result, setResult] = useState<ProxyCheckResult | null>(null)
 
@@ -32,9 +34,9 @@ export function ProxyField({ value, onChange }: ProxyFieldProps): React.JSX.Elem
     <div className="proxy-field">
       <div className="row">
         <input
-          aria-label="Proxy URL"
+          aria-label={t('proxy.placeholder')}
           className="input proxy-input"
-          placeholder="socks5://user:pass@host:port — leave empty for direct"
+          placeholder={t('proxy.placeholder')}
           value={value}
           onChange={(e) => onChange(e.target.value)}
         />
@@ -44,7 +46,7 @@ export function ProxyField({ value, onChange }: ProxyFieldProps): React.JSX.Elem
           disabled={checking || !value.trim()}
           onClick={() => void test()}
         >
-          {checking ? 'Testing…' : 'Test'}
+          {checking ? '⏳ ' + t('proxy.testing') : '🔌 ' + t('proxy.test')}
         </button>
       </div>
       {result && result.ok && (

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import type { Profile } from '../../main/types/profile'
+import { I18nProvider, useI18n } from './i18n'
 import { Profiles } from './pages/Profiles'
 import { ProfileWizard } from './pages/ProfileWizard'
 import { BulkCreate } from './pages/BulkCreate'
@@ -8,7 +9,8 @@ import { Settings } from './pages/Settings'
 /**
  * App shell: brand header with version, simple nav, modal orchestration
  * (wizard + bulk create) and the active page. Page switching is plain state —
- * no router dependency for a small tool.
+ * no router dependency for a small tool. Wraps everything in I18nProvider
+ * (language + beginner tips), so inner components use useI18n().
  */
 
 type Page = 'profiles' | 'settings'
@@ -19,7 +21,8 @@ interface AppInfo {
   dataDir: string
 }
 
-function App(): React.JSX.Element {
+function Shell(): React.JSX.Element {
+  const { t, lang, setLang, tips, setTips } = useI18n()
   const [page, setPage] = useState<Page>('profiles')
   const [info, setInfo] = useState<AppInfo | null>(null)
   const [wizardOpen, setWizardOpen] = useState(false)
@@ -68,24 +71,50 @@ function App(): React.JSX.Element {
             className={`nav-item ${page === 'profiles' ? 'active' : ''}`}
             onClick={() => setPage('profiles')}
           >
-            Profiles
+            <span aria-hidden="true">🗂️</span> {t('nav.profiles')}
           </button>
           <button
             type="button"
             className={`nav-item ${page === 'settings' ? 'active' : ''}`}
             onClick={() => setPage('settings')}
           >
-            Settings
+            <span aria-hidden="true">⚙️</span> {t('nav.settings')}
           </button>
         </nav>
-        {info && (
-          <div className="sidebar-footer">
-            <div className="muted">API 127.0.0.1:{info.apiPort}</div>
-            <div className="muted small" title={info.dataDir}>
-              {info.dataDir}
-            </div>
+        <div className="sidebar-footer">
+          <button
+            type="button"
+            className="btn ghost small"
+            onClick={() => setTips(!tips)}
+            title={tips ? t('tips.hide') : t('tips.show')}
+          >
+            {tips ? '💡 ' + t('tips.hide') : '💡 ' + t('tips.show')}
+          </button>
+          <div className="lang-switch" role="group" aria-label="Language">
+            <button
+              type="button"
+              className={`lang-btn ${lang === 'en' ? 'active' : ''}`}
+              onClick={() => setLang('en')}
+            >
+              EN
+            </button>
+            <button
+              type="button"
+              className={`lang-btn ${lang === 'vi' ? 'active' : ''}`}
+              onClick={() => setLang('vi')}
+            >
+              VI
+            </button>
           </div>
-        )}
+          {info && (
+            <>
+              <div className="muted">API 127.0.0.1:{info.apiPort}</div>
+              <div className="muted small" title={info.dataDir}>
+                {info.dataDir}
+              </div>
+            </>
+          )}
+        </div>
       </aside>
       <main className="content">
         {page === 'profiles' ? (
@@ -120,6 +149,14 @@ function App(): React.JSX.Element {
         />
       )}
     </div>
+  )
+}
+
+function App(): React.JSX.Element {
+  return (
+    <I18nProvider>
+      <Shell />
+    </I18nProvider>
   )
 }
 

@@ -3,6 +3,7 @@ import { describe, expect, it, vi, beforeEach, afterEach } from 'vitest'
 import { render, screen, fireEvent, waitFor, act, cleanup } from '@testing-library/react'
 import '@testing-library/jest-dom/vitest'
 import { Profiles } from './Profiles'
+import { I18nProvider } from '../i18n'
 import { createFoxmaskMock, fixtureProfile } from '../test/mock-foxmask'
 
 globalThis.IS_REACT_ACT_ENVIRONMENT = true
@@ -32,7 +33,7 @@ afterEach(() => {
 
 describe('Profiles page', () => {
   it('renders rows from the mocked list', async () => {
-    render(<Profiles onCreate={noop} onEdit={noop} onBulkCreate={noop} />)
+    render(<I18nProvider><Profiles onCreate={noop} onEdit={noop} onBulkCreate={noop}  /></I18nProvider>)
 
     expect(await screen.findByText('Shop Alpha')).toBeInTheDocument()
     expect(screen.getByText('Solo Beta')).toBeInTheDocument()
@@ -47,7 +48,7 @@ describe('Profiles page', () => {
   it('shows the empty state with a Create button when the list is empty', async () => {
     foxmask.profiles.list.mockResolvedValue({ rows: [], total: 0, last_page: 1 })
 
-    render(<Profiles onCreate={noop} onEdit={noop} onBulkCreate={noop} />)
+    render(<I18nProvider><Profiles onCreate={noop} onEdit={noop} onBulkCreate={noop}  /></I18nProvider>)
 
     expect(await screen.findByText(/no profiles yet/i)).toBeInTheDocument()
     const createButtons = screen.getAllByRole('button', { name: /create profile/i })
@@ -56,11 +57,11 @@ describe('Profiles page', () => {
 
   it('debounces search input by 300ms', async () => {
     vi.useFakeTimers()
-    render(<Profiles onCreate={noop} onEdit={noop} onBulkCreate={noop} />)
+    render(<I18nProvider><Profiles onCreate={noop} onEdit={noop} onBulkCreate={noop}  /></I18nProvider>)
     await act(async () => {})
     expect(foxmask.profiles.list).toHaveBeenCalledTimes(1)
 
-    const input = screen.getByLabelText('Search profiles')
+    const input = screen.getByLabelText(/Search profiles/)
     fireEvent.change(input, { target: { value: 'alpha' } })
 
     await act(async () => {
@@ -88,8 +89,8 @@ describe('Profiles page', () => {
         })
     )
 
-    render(<Profiles onCreate={noop} onEdit={noop} onBulkCreate={noop} />)
-    const launch = (await screen.findAllByRole('button', { name: 'Launch' }))[0]
+    render(<I18nProvider><Profiles onCreate={noop} onEdit={noop} onBulkCreate={noop}  /></I18nProvider>)
+    const launch = (await screen.findAllByRole('button', { name: /Launch/ }))[0]
     const statusCallsBefore = foxmask.profiles.status.mock.calls.length
 
     fireEvent.click(launch)
@@ -114,7 +115,7 @@ describe('Profiles page', () => {
       )
     )
 
-    render(<Profiles onCreate={noop} onEdit={noop} onBulkCreate={noop} />)
+    render(<I18nProvider><Profiles onCreate={noop} onEdit={noop} onBulkCreate={noop}  /></I18nProvider>)
     const row = await screen.findByText('Shop Alpha')
     const stopBtn = row.closest('tr')?.querySelector('button') as HTMLButtonElement
     await waitFor(() => expect(stopBtn).toHaveTextContent('Stop'))
@@ -126,7 +127,7 @@ describe('Profiles page', () => {
   it('Delete asks for confirmation and only deletes on confirm', async () => {
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
 
-    render(<Profiles onCreate={noop} onEdit={noop} onBulkCreate={noop} />)
+    render(<I18nProvider><Profiles onCreate={noop} onEdit={noop} onBulkCreate={noop}  /></I18nProvider>)
     const row = await screen.findByText('Shop Alpha')
     const delBtn = [...(row.closest('tr')?.querySelectorAll('button') ?? [])].find((b) =>
       b.textContent?.includes('Delete')
@@ -148,7 +149,7 @@ describe('Profiles page', () => {
       last_page: 3
     })
 
-    render(<Profiles onCreate={noop} onEdit={noop} onBulkCreate={noop} />)
+    render(<I18nProvider><Profiles onCreate={noop} onEdit={noop} onBulkCreate={noop}  /></I18nProvider>)
     const next = await screen.findByRole('button', { name: /next/i })
 
     fireEvent.click(next)
@@ -170,7 +171,7 @@ describe('Profiles page', () => {
   it('shows an error banner with retry when the list rejects', async () => {
     foxmask.profiles.list.mockRejectedValueOnce(new Error('db locked'))
 
-    render(<Profiles onCreate={noop} onEdit={noop} onBulkCreate={noop} />)
+    render(<I18nProvider><Profiles onCreate={noop} onEdit={noop} onBulkCreate={noop}  /></I18nProvider>)
     expect(await screen.findByText(/failed to load profiles/i)).toBeInTheDocument()
     expect(screen.getByText(/db locked/)).toBeInTheDocument()
 

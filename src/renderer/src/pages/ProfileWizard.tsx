@@ -2,6 +2,8 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import type { Profile } from '../../../main/types/profile'
 import type { Fingerprint } from '../../../main/types/fingerprint'
 import { ProxyField } from '../components/ProxyField'
+import { Tip } from '../components/Tip'
+import { useI18n } from '../i18n'
 
 /**
  * Profile create/edit wizard.
@@ -45,11 +47,16 @@ function basicsFromProfile(p: Profile | null): BasicsForm {
 }
 
 export function ProfileWizard({ initial, onClose, onSaved }: ProfileWizardProps): React.JSX.Element {
+  const { t } = useI18n()
   const editMode = initial !== null
-  const steps = useMemo(
-    () => (editMode ? ['Basics', 'Proxy', 'Review'] : ['Basics', 'Fingerprint', 'Proxy', 'Review']),
+  const stepKeys = useMemo(
+    () =>
+      editMode
+        ? (['wizard.step.basics', 'wizard.step.proxy', 'wizard.step.review'] as const)
+        : (['wizard.step.basics', 'wizard.step.fingerprint', 'wizard.step.proxy', 'wizard.step.review'] as const),
     [editMode]
   )
+  const steps = stepKeys.map((k) => t(k))
   const [stepIndex, setStepIndex] = useState(0)
   const [basics, setBasics] = useState<BasicsForm>(() => basicsFromProfile(initial))
   const [os, setOs] = useState<string>(initial?.fingerprint.os ?? 'windows')
@@ -83,44 +90,50 @@ export function ProfileWizard({ initial, onClose, onSaved }: ProfileWizardProps)
   }
 
   const canAdvance = (): boolean => {
-    if (step === 'Basics') return basics.name.trim() !== ''
+    if (stepIndex === 0) return basics.name.trim() !== ''
     return true
   }
 
-  const submit = useCallback(async (): Promise<void> => {
-    setSubmitting(true)
-    setError(null)
-    const shared = {
-      name: basics.name.trim(),
-      group_id: basics.group.trim() || 'default',
-      tags: basics.tags
-        .split(',')
-        .map((t) => t.trim())
-        .filter((t) => t !== ''),
-      note: basics.note,
-      startup_urls: basics.startupUrls
-        .split('\n')
-        .map((u) => u.trim())
-        .filter((u) => u !== ''),
-      raw_proxy: proxy.trim()
-    }
-    try {
-      const saved = editMode && initial
-        ? await window.foxmask.profiles.update(initial.id, shared)
-        : await window.foxmask.profiles.create({ ...shared, os, seed })
-      if (!saved) throw new Error('profile not found')
-      onSaved(saved)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err))
-      setSubmitting(false)
-    }
-  }, [basics, proxy, editMode, initial, os, seed, onSaved])
+  const submit = useCallback(
+    async (): Promise<void> => {
+      setSubmitting(true)
+      setError(null)
+      const shared = {
+        name: basics.name.trim(),
+        group_id: basics.group.trim() || 'default',
+        tags: basics.tags
+          .split(',')
+          .map((x) => x.trim())
+          .filter((x) => x !== ''),
+        note: basics.note,
+        startup_urls: basics.startupUrls
+          .split('\n')
+          .map((u) => u.trim())
+          .filter((u) => u !== ''),
+        raw_proxy: proxy.trim()
+      }
+      try {
+        const saved =
+          editMode && initial
+            ? await window.foxmask.profiles.update(initial.id, shared)
+            : await window.foxmask.profiles.create({ ...shared, os, seed })
+        if (!saved) throw new Error(t('wizard.notFound'))
+        onSaved(saved)
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err))
+        setSubmitting(false)
+      }
+    },
+    [basics, proxy, editMode, initial, os, seed, onSaved, t]
+  )
 
   return (
     <div className="modal-overlay" onClick={(e) => e.target === e.currentTarget && onClose()}>
-      <div className="modal wizard" role="dialog" aria-label="Profile wizard">
+      <div className="modal wizard" role="dialog" aria-label={t('wizard.title.create')}>
         <header className="modal-header">
-          <h3>{editMode ? `Edit “${initial?.name}”` : 'Create profile'}</h3>
+          <h3>
+            {editMode ? t('wizard.title.edit', { name: initial?.name ?? '' }) : t('wizard.title.create')}
+          </h3>
           <button type="button" className="btn ghost" aria-label="Close" onClick={onClose}>
             ✕
           </button>
@@ -141,41 +154,42 @@ export function ProfileWizard({ initial, onClose, onSaved }: ProfileWizardProps)
             </div>
           )}
 
-          {step === 'Basics' && (
+          {step === t('wizard.step.basics') && (
             <div className="form">
+              <Tip tipKey="tip.wizard.basics" />
               <label>
-                Name *
+                {t('wizard.name')}
                 <input
-                  aria-label="Profile name"
+                  aria-label={t('wizard.name')}
                   className="input"
                   value={basics.name}
                   onChange={(e) => setField('name', e.target.value)}
-                  placeholder="e.g. Shop Alpha"
+                  placeholder={t('wizard.namePlaceholder')}
                 />
               </label>
               <label>
-                Group
+                {t('wizard.group')}
                 <input
-                  aria-label="Group"
+                  aria-label={t('wizard.group')}
                   className="input"
                   value={basics.group}
                   onChange={(e) => setField('group', e.target.value)}
                 />
               </label>
               <label>
-                Tags (comma separated)
+                {t('wizard.tags')}
                 <input
-                  aria-label="Tags"
+                  aria-label={t('wizard.tags')}
                   className="input"
                   value={basics.tags}
                   onChange={(e) => setField('tags', e.target.value)}
-                  placeholder="shop, vip"
+                  placeholder={t('wizard.tagsPlaceholder')}
                 />
               </label>
               <label>
-                Note
+                {t('wizard.note')}
                 <textarea
-                  aria-label="Note"
+                  aria-label={t('wizard.note')}
                   className="input"
                   rows={2}
                   value={basics.note}
@@ -183,9 +197,9 @@ export function ProfileWizard({ initial, onClose, onSaved }: ProfileWizardProps)
                 />
               </label>
               <label>
-                Startup URLs (one per line)
+                {t('wizard.startupUrls')}
                 <textarea
-                  aria-label="Startup URLs"
+                  aria-label={t('wizard.startupUrls')}
                   className="input"
                   rows={2}
                   value={basics.startupUrls}
@@ -196,12 +210,13 @@ export function ProfileWizard({ initial, onClose, onSaved }: ProfileWizardProps)
             </div>
           )}
 
-          {step === 'Fingerprint' && (
+          {step === t('wizard.step.fingerprint') && (
             <div className="form">
+              <Tip tipKey="tip.wizard.fingerprint" />
               <label>
-                Operating system
+                {t('wizard.os')}
                 <select
-                  aria-label="Fingerprint OS"
+                  aria-label={t('wizard.os')}
                   className="input select"
                   value={os}
                   onChange={(e) => setOs(e.target.value)}
@@ -216,80 +231,85 @@ export function ProfileWizard({ initial, onClose, onSaved }: ProfileWizardProps)
               {preview ? (
                 <div className="fp-preview">
                   <div className="fp-row">
-                    <span className="muted">User-Agent</span>
+                    <span className="muted">{t('wizard.ua')}</span>
                     <code>{preview.userAgent}</code>
                   </div>
                   <div className="fp-row">
-                    <span className="muted">Screen</span>
+                    <span className="muted">{t('wizard.screen')}</span>
                     <code>
                       {preview.screen.width}×{preview.screen.height}
                     </code>
                   </div>
                   <div className="fp-row">
-                    <span className="muted">GPU</span>
+                    <span className="muted">{t('wizard.gpu')}</span>
                     <code>{preview.webgl.renderer}</code>
                   </div>
                   <div className="fp-row">
-                    <span className="muted">Timezone</span>
+                    <span className="muted">{t('wizard.timezone')}</span>
                     <code>{preview.timezone}</code>
                   </div>
                   <div className="fp-row">
-                    <span className="muted">Cores / RAM</span>
+                    <span className="muted">{t('wizard.cores')}</span>
                     <code>
                       {preview.hardwareConcurrency} / {preview.deviceMemory}GB
                     </code>
                   </div>
                 </div>
               ) : (
-                <p className="muted">Generating preview…</p>
+                <p className="muted">{t('wizard.previewWaiting')}</p>
               )}
               <button
                 type="button"
                 className="btn ghost"
                 onClick={() => setSeed(crypto.randomUUID())}
               >
-                ↻ Regenerate
+                {t('wizard.regenerate')}
               </button>
             </div>
           )}
 
-          {step === 'Proxy' && <ProxyField value={proxy} onChange={setProxy} />}
+          {step === t('wizard.step.proxy') && (
+            <div className="form">
+              <Tip tipKey="tip.wizard.proxy" />
+              <ProxyField value={proxy} onChange={setProxy} />
+            </div>
+          )}
 
-          {step === 'Review' && (
+          {step === t('wizard.step.review') && (
             <div className="review">
               <div className="fp-row">
-                <span className="muted">Name</span>
+                <span className="muted">{t('table.name')}</span>
                 <strong>{basics.name.trim()}</strong>
               </div>
               <div className="fp-row">
-                <span className="muted">Group</span>
+                <span className="muted">{t('table.group')}</span>
                 <span>{basics.group.trim() || 'default'}</span>
               </div>
               <div className="fp-row">
-                <span className="muted">Tags</span>
+                <span className="muted">{t('table.tags')}</span>
                 <span>
                   {basics.tags
                     .split(',')
-                    .map((t) => t.trim())
-                    .filter((t) => t !== '')
+                    .map((x) => x.trim())
+                    .filter((x) => x !== '')
                     .join(', ') || '—'}
                 </span>
               </div>
               {preview && (
                 <div className="fp-row">
-                  <span className="muted">Fingerprint</span>
+                  <span className="muted">{t('wizard.reviewFingerprint')}</span>
                   <code>{preview.userAgent}</code>
                 </div>
               )}
               {editMode && initial && (
                 <div className="fp-row">
-                  <span className="muted">Fingerprint</span>
+                  <span className="muted">{t('wizard.reviewFingerprint')}</span>
                   <code>{initial.fingerprint.userAgent}</code>
                 </div>
               )}
               <div className="fp-row">
-                <span className="muted">Proxy</span>
-                <code>{proxy.trim() || 'direct'}</code>
+                <span className="muted">{t('wizard.reviewProxy')}</span>
+                <code>{proxy.trim() || t('table.direct')}</code>
               </div>
             </div>
           )}
@@ -297,7 +317,7 @@ export function ProfileWizard({ initial, onClose, onSaved }: ProfileWizardProps)
 
         <footer className="modal-footer">
           <button type="button" className="btn ghost" onClick={onClose}>
-            Cancel
+            {t('wizard.cancel')}
           </button>
           <div className="spacer" />
           {stepIndex > 0 && (
@@ -306,7 +326,7 @@ export function ProfileWizard({ initial, onClose, onSaved }: ProfileWizardProps)
               className="btn ghost"
               onClick={() => setStepIndex((i) => Math.max(0, i - 1))}
             >
-              ‹ Back
+              {t('wizard.back')}
             </button>
           )}
           {stepIndex < steps.length - 1 ? (
@@ -316,7 +336,7 @@ export function ProfileWizard({ initial, onClose, onSaved }: ProfileWizardProps)
               disabled={!canAdvance()}
               onClick={() => setStepIndex((i) => i + 1)}
             >
-              Next ›
+              {t('wizard.next')}
             </button>
           ) : (
             <button
@@ -325,7 +345,11 @@ export function ProfileWizard({ initial, onClose, onSaved }: ProfileWizardProps)
               disabled={submitting || basics.name.trim() === ''}
               onClick={() => void submit()}
             >
-              {submitting ? 'Saving…' : editMode ? 'Save changes' : 'Create profile'}
+              {submitting
+                ? t('wizard.saving')
+                : editMode
+                  ? t('wizard.save')
+                  : t('wizard.create')}
             </button>
           )}
         </footer>

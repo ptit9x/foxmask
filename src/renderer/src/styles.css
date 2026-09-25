@@ -502,3 +502,33 @@ textarea.input {
   gap: 10px;
   align-items: center;
 }
+
+/* Beginner tips + language switch */
+.tip {
+  background: rgba(249, 115, 22, 0.08);
+  border: 1px solid rgba(249, 115, 22, 0.35);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 0 0 14px 0;
+  color: #e6e8eb;
+  font-size: 13px;
+  line-height: 1.5;
+}
+.lang-switch { display: flex; gap: 4px; margin: 8px 0; }
+.lang-btn {
+  flex: 1;
+  background: transparent;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 0;
+  cursor: pointer;
+}
+.lang-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #0f1115;
+}
+.sidebar-footer .btn.small { font-size: 11px; padding: 4px 8px; width: 100%; }

@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react'
 import type { AppSettings } from '../../../main/settings/settings'
+import { Tip } from '../components/Tip'
+import { useI18n } from '../i18n'
 
 /**
  * Settings page: API port, data dir, Chromium path, launch-at-login.
@@ -7,6 +9,7 @@ import type { AppSettings } from '../../../main/settings/settings'
  */
 
 export function Settings(): React.JSX.Element {
+  const { t } = useI18n()
   const [settings, setSettings] = useState<AppSettings | null>(null)
   const [info, setInfo] = useState<{ apiPort: number; dataDir: string } | null>(null)
   const [saving, setSaving] = useState(false)
@@ -28,7 +31,7 @@ export function Settings(): React.JSX.Element {
     }
   }, [])
 
-  if (!settings) return <div className="page muted">Loading settings…</div>
+  if (!settings) return <div className="page muted">{t('settings.loading')}</div>
 
   const update = (patch: Partial<AppSettings>): void => {
     setSettings((prev) => (prev ? { ...prev, ...patch } : prev))
@@ -57,7 +60,8 @@ export function Settings(): React.JSX.Element {
 
   return (
     <div className="page">
-      <h2>Settings</h2>
+      <h2>⚙️ {t('settings.title')}</h2>
+      <Tip tipKey="tip.settings" />
       {error && (
         <div role="alert" className="banner error">
           {error}
@@ -65,9 +69,9 @@ export function Settings(): React.JSX.Element {
       )}
       <div className="settings-form form">
         <label>
-          API port (applies after restart; effective: {info ? info.apiPort : '…'})
+          {t('settings.apiPort')} ({t('settings.apiPortEffective', { port: info ? String(info.apiPort) : '…' })})
           <input
-            aria-label="API port"
+            aria-label={t('settings.apiPort')}
             className="input"
             type="number"
             min={1024}
@@ -77,9 +81,9 @@ export function Settings(): React.JSX.Element {
           />
         </label>
         <label>
-          Data directory (empty = default)
+          {t('settings.dataDir')}
           <input
-            aria-label="Data directory"
+            aria-label={t('settings.dataDir')}
             className="input"
             placeholder={info?.dataDir ?? '~/.foxmask'}
             value={settings.dataDir}
@@ -87,9 +91,9 @@ export function Settings(): React.JSX.Element {
           />
         </label>
         <label>
-          Chromium executable (empty = managed download)
+          {t('settings.chromium')}
           <input
-            aria-label="Chromium path"
+            aria-label={t('settings.chromium')}
             className="input"
             placeholder="auto"
             value={settings.chromiumPath}
@@ -98,12 +102,12 @@ export function Settings(): React.JSX.Element {
         </label>
         <label className="checkbox-row">
           <input
-            aria-label="Launch at login"
+            aria-label={t('settings.launchAtLogin')}
             type="checkbox"
             checked={settings.launchAtLogin}
             onChange={(e) => update({ launchAtLogin: e.target.checked })}
           />
-          Launch Foxmask at login
+          {t('settings.launchAtLogin')}
         </label>
         <div className="row">
           <button
@@ -112,9 +116,9 @@ export function Settings(): React.JSX.Element {
             disabled={saving}
             onClick={() => void save()}
           >
-            {saving ? 'Saving…' : 'Save settings'}
+            {saving ? t('settings.saving') : t('settings.save')}
           </button>
-          {saved && <span className="muted">Saved ✓</span>}
+          {saved && <span className="muted">{t('settings.saved')}</span>}
         </div>
       </div>
     </div>
