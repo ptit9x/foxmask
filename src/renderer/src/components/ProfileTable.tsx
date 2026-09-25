@@ -3,8 +3,8 @@ import type { LauncherStatus } from '../../../main/api/server'
 import { useI18n } from '../i18n'
 
 /**
- * The profile table: status dot, identity columns, and per-row actions.
- * Purely presentational — all behaviour arrives via props.
+ * The profile table: selection checkboxes, status dot, identity columns, and
+ * per-row actions. Purely presentational — all behaviour arrives via props.
  */
 
 const OS_LABELS: Record<string, string> = {
@@ -29,6 +29,10 @@ interface ProfileTableProps {
   rows: Profile[]
   statuses: Record<string, LauncherStatus>
   busyIds: ReadonlySet<string>
+  /** Currently checked profile ids. */
+  selectedIds: ReadonlySet<string>
+  onToggleSelect(id: string, checked: boolean): void
+  onToggleSelectAll(checked: boolean): void
   onLaunch: (profile: Profile) => void | Promise<void>
   onStop: (profile: Profile) => void | Promise<void>
   onEdit: (profile: Profile) => void
@@ -40,6 +44,9 @@ export function ProfileTable({
   rows,
   statuses,
   busyIds,
+  selectedIds,
+  onToggleSelect,
+  onToggleSelectAll,
   onLaunch,
   onStop,
   onEdit,
@@ -47,10 +54,22 @@ export function ProfileTable({
   onDelete
 }: ProfileTableProps): React.JSX.Element {
   const { t } = useI18n()
+  const allSelected = rows.length > 0 && rows.every((r) => selectedIds.has(r.id))
   return (
     <table className="profile-table">
       <thead>
         <tr>
+          <th className="col-select">
+            <input
+              type="checkbox"
+              aria-label={t('table.selectAll')}
+              checked={allSelected}
+              ref={(el) => {
+                if (el) el.indeterminate = selectedIds.size > 0 && !allSelected
+              }}
+              onChange={(e) => onToggleSelectAll(e.target.checked)}
+            />
+          </th>
           <th className="col-status">{t('table.status')}</th>
           <th>{t('table.name')}</th>
           <th>{t('table.group')}</th>
@@ -67,6 +86,14 @@ export function ProfileTable({
           const busy = busyIds.has(row.id)
           return (
             <tr key={row.id} data-profile-id={row.id}>
+              <td className="col-select">
+                <input
+                  type="checkbox"
+                  aria-label={`${t('table.selectRow')} ${row.name}`}
+                  checked={selectedIds.has(row.id)}
+                  onChange={(e) => onToggleSelect(row.id, e.target.checked)}
+                />
+              </td>
               <td className="col-status">
                 <span
                   className={`dot ${running ? 'running' : 'stopped'}`}

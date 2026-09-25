@@ -532,3 +532,25 @@ textarea.input {
   color: #0f1115;
 }
 .sidebar-footer .btn.small { font-size: 11px; padding: 4px 8px; width: 100%; }
+
+/* Action sync panel */
+.sync-panel {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.sync-panel .tip { border: none; background: none; padding: 0; margin: 0; }
+.sync-controls { display: flex; gap: 8px; align-items: center; }
+.sync-controls .select { width: 240px; }
+.sync-active {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  color: var(--text);
+  font-size: 13px;
+}
+.sync-badge { font-size: 16px; }

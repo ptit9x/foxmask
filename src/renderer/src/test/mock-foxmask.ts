@@ -62,6 +62,10 @@ export function createFoxmaskMock(): {
     check: vi.fn(),
     fingerprintPreview: vi.fn(),
     settingsGet: vi.fn(),
+    syncStart: vi.fn(async () => ({ master: 'm1', followers: [] })),
+    syncStop: vi.fn(async () => ({ stopped: true })),
+    syncStatus: vi.fn(async () => ({ enabled: false, master: null, followers: [] })),
+    syncAction: vi.fn(async () => ({ delivered: 0 })),
     settingsSet: vi.fn(),
     appInfo: vi.fn()
   }
@@ -80,6 +84,12 @@ export function createFoxmaskMock(): {
     },
     proxies: { check: fns.check },
     fingerprintPreview: fns.fingerprintPreview,
+    sync: {
+      start: fns.syncStart,
+      stop: fns.syncStop,
+      status: fns.syncStatus,
+      action: fns.syncAction
+    },
     settings: { get: fns.settingsGet, set: fns.settingsSet },
     appInfo: fns.appInfo
   } as unknown as FoxmaskApi

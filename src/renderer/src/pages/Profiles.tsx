@@ -3,6 +3,7 @@ import type { Profile } from '../../../main/types/profile'
 import type { LauncherStatus } from '../../../main/api/server'
 import { ProfileTable } from '../components/ProfileTable'
 import { Tip } from '../components/Tip'
+import { SyncPanel } from '../components/SyncPanel'
 import { useI18n } from '../i18n'
 
 /**
@@ -37,6 +38,7 @@ export function Profiles({ onCreate, onEdit, onBulkCreate }: ProfilesPageProps):
   const [search, setSearch] = useState('')
   const [group, setGroup] = useState('')
   const [busyIds, setBusyIds] = useState<ReadonlySet<string>>(new Set())
+  const [selectedIds, setSelectedIds] = useState<ReadonlySet<string>>(new Set())
   const [actionError, setActionError] = useState<string | null>(null)
   const searchTimer = useRef<number | null>(null)
 
@@ -216,6 +218,12 @@ export function Profiles({ onCreate, onEdit, onBulkCreate }: ProfilesPageProps):
   return (
     <div className="page">
       <Tip tipKey="tip.profiles" />
+      <SyncPanel
+        rows={visibleRows}
+        statuses={statuses}
+        selectedIds={selectedIds}
+        onClearSelection={() => setSelectedIds(new Set())}
+      />
       <div className="toolbar">
         <input
           aria-label={t('toolbar.search')}
@@ -290,6 +298,18 @@ export function Profiles({ onCreate, onEdit, onBulkCreate }: ProfilesPageProps):
         </div>
       ) : (
         <ProfileTable
+          selectedIds={selectedIds}
+          onToggleSelect={(id, checked) =>
+            setSelectedIds((prev) => {
+              const next = new Set(prev)
+              if (checked) next.add(id)
+              else next.delete(id)
+              return next
+            })
+          }
+          onToggleSelectAll={(checked) =>
+            setSelectedIds(checked ? new Set(visibleRows.map((r) => r.id)) : new Set())
+          }
           rows={visibleRows}
           statuses={statuses}
           busyIds={busyIds}

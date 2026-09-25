@@ -115,7 +115,21 @@ const en = {
   'tip.wizard.proxy': 'Optional: paste a proxy so this profile browses from another IP. Press Test to verify it works before saving.',
   'tip.bulk': 'Need many profiles at once? Bulk create generates N unique-fingerprint profiles sharing one group and proxy.',
   'tip.importExport': 'Export saves all profiles to a JSON file (backup / move to another machine). Import restores them.',
-  'tip.settings': 'These options are for advanced use — defaults are fine for most people. API port is where automation tools connect.'
+  'tip.settings': 'These options are for advanced use — defaults are fine for most people. API port is where automation tools connect.',
+  'tip.sync': 'Action Sync mirrors everything you do in the master browser — clicks, typing, scrolling, navigation — into every other running profile. Handy for managing multiple accounts in lockstep.',
+
+  'sync.master': 'Sync master profile',
+  'sync.pickMaster': '— pick master profile —',
+  'sync.start': 'Start sync',
+  'sync.stop': 'Stop sync',
+  'sync.activePrefix': 'Syncing actions from',
+  'sync.followersSuffix': 'follower(s)',
+  'sync.needTwo': 'Start at least 2 profiles to use sync',
+  'table.selectAll': 'Select all profiles',
+  'table.selectRow': 'Select',
+  'sync.pickMasterReady': '— pick master from selection —',
+  'sync.selectedCount': '{n} selected',
+  'sync.clearSelection': 'Clear selection'
 }
 
 const vi: typeof en = {
@@ -224,7 +238,21 @@ const vi: typeof en = {
   'tip.wizard.proxy': 'Tùy chọn: dán proxy để hồ sơ này duyệt web từ IP khác. Nhấn Kiểm tra để chắc chắn proxy hoạt động trước khi lưu.',
   'tip.bulk': 'Cần nhiều hồ sơ cùng lúc? Tạo hàng loạt sẽ tạo N hồ sơ có dấu vân tay riêng biệt, dùng chung một nhóm và proxy.',
   'tip.importExport': 'Xuất lưu toàn bộ hồ sơ ra file JSON (sao lưu / chuyển máy). Nhập sẽ khôi phục chúng.',
-  'tip.settings': 'Các tùy chọn này dành cho người dùng nâng cao — để mặc định là ổn với đa số mọi người. Cổng API là nơi các công cụ tự động kết nối vào.'
+  'tip.settings': 'Các tùy chọn này dành cho người dùng nâng cao — để mặc định là ổn với đa số mọi người. Cổng API là nơi các công cụ tự động kết nối vào.',
+  'tip.sync': 'Đồng bộ hành động sao chép mọi thao tác bạn thực hiện trong trình duyệt gốc — nhấp chuột, gõ phím, cuộn, điều hướng — sang mọi hồ sơ đang chạy khác. Hữu ích khi quản lý nhiều tài khoản cùng lúc.',
+
+  'sync.master': 'Hồ sơ gốc đồng bộ',
+  'sync.pickMaster': '— chọn hồ sơ gốc —',
+  'sync.start': 'Bắt đầu đồng bộ',
+  'sync.stop': 'Dừng đồng bộ',
+  'sync.activePrefix': 'Đang đồng bộ từ',
+  'sync.followersSuffix': 'hồ sơ theo',
+  'sync.needTwo': 'Chạy ít nhất 2 hồ sơ để dùng đồng bộ',
+  'table.selectAll': 'Chọn tất cả hồ sơ',
+  'table.selectRow': 'Chọn',
+  'sync.pickMasterReady': '— chọn hồ sơ gốc trong mục đã chọn —',
+  'sync.selectedCount': 'Đã chọn {n}',
+  'sync.clearSelection': 'Bỏ chọn'
 }
 
 const DICTS: Record<Lang, typeof en> = { en, vi }
@@ -308,3 +336,4 @@ export function useI18n(): I18nContextValue {
   if (!ctx) throw new Error('useI18n must be used inside I18nProvider')
   return ctx
 }
+
