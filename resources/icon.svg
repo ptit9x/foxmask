@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff9a3d"/>
+      <stop offset="0.55" stop-color="#f97316"/>
+      <stop offset="1" stop-color="#e35d0b"/>
+    </linearGradient>
+  </defs>
+  <!-- squircle -->
+  <rect x="32" y="32" width="960" height="960" rx="228" fill="url(#bg)"/>
+  <!-- fox head silhouette -->
+  <path d="M300 236 L472 366 L552 366 L724 236 L774 462
+           Q774 656 512 800
+           Q250 656 250 462 Z" fill="#ffffff"/>
+  <!-- eyes: slanted capsules in bg gradient color -->
+  <g fill="url(#bg)">
+    <rect x="332" y="470" width="140" height="44" rx="22" transform="rotate(14 402 492)"/>
+    <rect x="552" y="470" width="140" height="44" rx="22" transform="rotate(-14 622 492)"/>
+  </g>
+  <!-- nose -->
+  <path d="M512 606 L560 656 L512 690 L464 656 Z" fill="url(#bg)"/>
+</svg>

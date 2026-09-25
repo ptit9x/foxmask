@@ -2,9 +2,12 @@
   "name": "foxmask",
   "productName": "Foxmask",
   "version": "0.1.0",
-  "description": "Foxmask Browser — antidetect browser for managing fingerprinted profiles",
+  "description": "Foxmask Browser \u2014 antidetect browser for managing fingerprinted profiles",
   "main": "./out/main/index.js",
-  "author": "Richard Do",
+  "author": {
+    "name": "ptit9x",
+    "email": "ptit9x@users.noreply.github.com"
+  },
   "license": "MIT",
   "private": true,
   "scripts": {
