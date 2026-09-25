@@ -122,6 +122,15 @@ export async function probeDevtoolsEndpoint(
   return null;
 }
 
+/** context.pages() guarded against closed contexts. */
+function safePages(ctx: BrowserContext): Page[] {
+  try {
+    return ctx.pages();
+  } catch {
+    return [];
+  }
+}
+
 export class Launcher {
   private readonly opts: LauncherOptions;
   private readonly contexts = new Map<string, BrowserContext>();
@@ -133,6 +142,12 @@ export class Launcher {
    * NOT cached — a later start may succeed once the network recovers.
    */
   private readonly proxyChecks = new Map<string, { raw: string; result: ProxyCheckOk }>();
+  /**
+   * Grid slots currently taken by running profiles (slot index → profileId).
+   * Windows are placed left-to-right, top-to-bottom so multiple profiles tile
+   * the screen instead of stacking on top of each other.
+   */
+  private readonly windowSlots = new Map<number, string>();
 
   constructor(opts: LauncherOptions = {}) {
     this.opts = opts;
@@ -233,6 +248,8 @@ export class Launcher {
 
     await ctx.addInitScript({ content: buildInjectScript(merged) });
     await this.openStartupUrls(ctx, profile.startup_urls ?? []);
+    // Tile the window into a free grid slot (must run after the first page exists).
+    await this.tileWindows();
 
     // Probe the DevTools HTTP endpoint for the browser-level ws URL. Probe
     // failure is non-fatal: the browser is up and usable either way.
@@ -279,12 +296,80 @@ export class Launcher {
     if (!ctx) return false;
     // Remove first so the profile stops "running" immediately, even if close hangs.
     this.contexts.delete(profileId);
+    for (const [slot, id] of this.windowSlots) {
+      if (id === profileId) this.windowSlots.delete(slot);
+    }
     try {
       await ctx.close();
     } catch {
       // context already died — it is still no longer running
     }
+    // Re-tile the remaining windows so the freed space is used again.
+    await this.tileWindows();
     return true;
+  }
+
+  /**
+   * Tile every running profile's first page window into a grid. Uses the CDP
+   * window bounds (Browser.setWindowBounds) so it works for real Chromium
+   * windows on any platform. Grid: up to 3 columns across the work area with
+   * a small gap; rows stack downward. Failures are non-fatal (best effort).
+   */
+  private async tileWindows(): Promise<void> {
+    const running = [...this.contexts.entries()];
+    if (running.length === 0) return;
+
+    // Work area: primary display minus a rough taskbar allowance.
+    const gap = 16;
+    const top = 40;
+    const workW = 1920;
+    const workH = 1040;
+    const cols = Math.min(3, running.length);
+    const rowsCount = Math.ceil(running.length / cols);
+    const cellW = Math.floor((workW - gap * (cols + 1)) / cols);
+    const cellH = Math.floor((workH - top - gap * (rowsCount + 1)) / rowsCount);
+
+    // Rebuild the slot map from scratch (ids keep a stable order).
+    this.windowSlots.clear();
+    let slot = 0;
+    for (const [profileId, ctx] of running) {
+      this.windowSlots.set(slot, profileId);
+      const col = slot % cols;
+      const row = Math.floor(slot / cols);
+      const x = gap + col * (cellW + gap);
+      const y = top + gap + row * (cellH + gap);
+      const pages = safePages(ctx);
+      type CdpLike = { send(m: string, p?: unknown): Promise<unknown>; detach(): Promise<void> };
+      let cdp: CdpLike | null = null;
+      try {
+        if (pages[0]) {
+          cdp = (await pages[0].context().newCDPSession(pages[0])) as CdpLike;
+        }
+      } catch {
+        cdp = null; // fake contexts in unit tests / closed pages
+      }
+      if (!cdp) {
+        slot++;
+        continue;
+      }
+      try {
+        const { windowId } = (await cdp.send('Browser.getWindowForTarget')) as {
+          windowId: number;
+        };
+        await cdp.send('Browser.setWindowBounds', {
+          windowId,
+          bounds: { left: x, top: y, width: cellW, height: cellH, windowState: 'normal' }
+        });
+      } catch {
+        // headless or window already gone — non-fatal
+      }
+      try {
+        await (cdp as { detach(): Promise<void> }).detach();
+      } catch {
+        // already detached
+      }
+      slot++;
+    }
   }
 
   /**
