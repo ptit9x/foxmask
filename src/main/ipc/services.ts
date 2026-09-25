@@ -4,6 +4,7 @@ import { closeDb as defaultCloseDb, openDb as defaultOpenDb } from '../db/db';
 import { launcher as defaultLauncher, resolveDataDir } from '../launcher/launch';
 import { startApiServer as defaultStartApiServer, type ApiDeps, type LauncherLike } from '../api/server';
 import { checkProxy as defaultCheckProxy } from '../proxy/check';
+import { ActionSync } from '../sync/sync';
 
 /**
  * Main-process service container (db + launcher + local API server).
@@ -42,6 +43,8 @@ export interface AppServices {
   apiPort: number;
   /** Root data dir (~/.foxmask or FOXMASK_HOME) the db lives in. */
   dataDir: string;
+  /** Action-sync engine shared by IPC and the API server. */
+  sync: ActionSync;
   /** Shut the API server and the db down. Safe to call once; never when uninitialized. */
   dispose: () => Promise<void>;
 }
@@ -67,6 +70,7 @@ export async function createServices(deps: ServicesDeps = {}): Promise<AppServic
   return {
     db,
     launcher,
+    sync: new ActionSync(),
     apiPort: server.port,
     dataDir,
     dispose: async (): Promise<void> => {

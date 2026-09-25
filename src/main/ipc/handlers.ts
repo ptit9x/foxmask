@@ -18,6 +18,7 @@ import type { LaunchResult } from '../launcher/launch';
 import type { CheckProxyFn, LauncherLike, LauncherStatus } from '../api/server';
 import type { ProxyCheckResult } from '../proxy/check';
 import type { Profile } from '../types/profile';
+import { ActionSync, type SyncAction } from '../sync/sync';
 
 /**
  * Typed IPC bridge handlers (invoke-style request/response).
@@ -51,6 +52,16 @@ export interface IpcServices {
   apiPort: number;
   /** Root data dir (~/.foxmask or FOXMASK_HOME). */
   dataDir: string;
+  /** Action-sync engine (optional so existing test fakes keep working). */
+  sync?: ActionSync;
+  /** BrowserContext accessor for sync: a running profile's context or null. */
+  getSyncContext?: (profileId: string) => unknown;
+}
+
+/** Context the sync handlers get the master context from. */
+export interface SyncContextAccessor {
+  /** BrowserContext of a running profile, or null when not running. */
+  (profileId: string): unknown;
 }
 
 /** Info about the running app served over the app:info channel. */
@@ -284,6 +295,77 @@ export function registerIpcHandlers(ipcMainLike: IpcMainLike, services: IpcServi
     'settings:set',
     wrap((patch: Partial<AppSettings>): AppSettings => {
       return saveSettings(services.db, patch ?? {});
+    })
+  );
+
+  // ---- Action sync -------------------------------------------------------
+
+  ipcMainLike.handle(
+    'sync:start',
+    wrap(
+      (
+        masterId: string,
+        followerIds: string[]
+      ): { master: string; followers: string[] } => {
+        if (!services.sync) throw new Error('sync not available');
+        if (typeof masterId !== 'string' || masterId.trim() === '') {
+          throw new Error('masterId is required');
+        }
+        if (!Array.isArray(followerIds)) throw new Error('followerIds must be an array');
+        const getContext =
+          services.getSyncContext ??
+          (() => {
+            throw new Error('sync contexts not available in this build');
+          });
+        const masterCtx = getContext(masterId);
+        if (!masterCtx) throw new Error(`master profile ${masterId} is not running`);
+        services.sync.clear();
+        services.sync.setMaster(masterId, masterCtx as never, (id) =>
+          getContext(id) ? { running: true } : { running: false }
+        );
+        const attached: string[] = [];
+        for (const id of followerIds) {
+          if (id === masterId) continue;
+          const ctx = getContext(id);
+          if (!ctx) continue;
+          services.sync.attach(id, ctx as never);
+          attached.push(id);
+        }
+        return { master: masterId, followers: attached };
+      }
+    )
+  );
+
+  ipcMainLike.handle(
+    'sync:stop',
+    wrap((): { stopped: boolean } => {
+      if (!services.sync) throw new Error('sync not available');
+      services.sync.clear();
+      return { stopped: true };
+    })
+  );
+
+  ipcMainLike.handle(
+    'sync:status',
+    wrap((): { enabled: boolean; master: string | null; followers: string[] } => {
+      if (!services.sync) return { enabled: false, master: null, followers: [] };
+      return {
+        enabled: services.sync.isEnabled(),
+        master: services.sync.getMaster(),
+        followers: services.sync.listFollowers()
+      };
+    })
+  );
+
+  ipcMainLike.handle(
+    'sync:action',
+    wrap(async (action: SyncAction): Promise<{ delivered: number }> => {
+      if (!services.sync) throw new Error('sync not available');
+      if (!action || typeof action !== 'object' || typeof action.type !== 'string') {
+        throw new Error('action is required');
+      }
+      const delivered = await services.sync.sync(action);
+      return { delivered };
     })
   );
 }

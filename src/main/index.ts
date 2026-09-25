@@ -42,7 +42,10 @@ void app.whenReady().then(async () => {
       checkProxy,
       version: app.getVersion(),
       apiPort: services.apiPort,
-      dataDir: services.dataDir
+      dataDir: services.dataDir,
+      sync: services.sync,
+      getSyncContext: (profileId: string): unknown =>
+        services.launcher.getContext?.(profileId) ?? null
     })
   } catch (err) {
     console.error('[foxmask] service initialization failed:', err)

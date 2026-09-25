@@ -13,6 +13,7 @@ import type { LaunchResult } from '../main/launcher/launch'
 import type { LauncherStatus } from '../main/api/server'
 import type { ProxyCheckResult } from '../main/proxy/check'
 import type { Profile } from '../main/types/profile'
+import type { SyncAction } from '../main/sync/sync'
 
 /**
  * Renderer-facing API exposed as window.foxmask. Mirrors the IPC channels
@@ -42,6 +43,14 @@ export interface FoxmaskApi {
     get(): Promise<AppSettings>
     set(patch: Partial<AppSettings>): Promise<AppSettings>
   }
+  sync: {
+    /** Start mirroring: actions in masterId are replayed in followerIds. */
+    start(masterId: string, followerIds: string[]): Promise<{ master: string; followers: string[] }>
+    stop(): Promise<{ stopped: boolean }>
+    status(): Promise<{ enabled: boolean; master: string | null; followers: string[] }>
+    /** Inject one action into every follower (programmatic replay). */
+    action(action: SyncAction): Promise<{ delivered: number }>
+  }
   appInfo(): Promise<AppInfoResult>
 }
 
@@ -66,6 +75,12 @@ const api: FoxmaskApi = {
   settings: {
     get: () => ipcRenderer.invoke('settings:get'),
     set: (patch) => ipcRenderer.invoke('settings:set', patch)
+  },
+  sync: {
+    start: (masterId, followerIds) => ipcRenderer.invoke('sync:start', masterId, followerIds),
+    stop: () => ipcRenderer.invoke('sync:stop'),
+    status: () => ipcRenderer.invoke('sync:status'),
+    action: (action) => ipcRenderer.invoke('sync:action', action)
   },
   appInfo: () => ipcRenderer.invoke('app:info')
 }

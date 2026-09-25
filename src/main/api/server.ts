@@ -20,6 +20,7 @@ import {
 import { generateFingerprint } from '../fingerprint/generate';
 import type { ProxyCheckResult } from '../proxy/check';
 import type { Profile, ProfileRow } from '../types/profile';
+import { ActionSync, type SyncAction, SYNC_ACTION_TYPES } from '../sync/sync';
 
 /**
  * Local REST API (v1).
@@ -49,6 +50,8 @@ export interface LauncherLike {
   start(profile: Profile): Promise<LaunchResult>;
   stop(profileId: string): Promise<boolean>;
   getStatus(profileId: string): LauncherStatus;
+  /** Live BrowserContext of a running profile (used by action sync). */
+  getContext?(profileId: string): unknown;
 }
 
 /** Injected proxy checker (src/main/proxy/check.ts or a test stub). */
@@ -58,6 +61,8 @@ export interface ApiDeps {
   db: DatabaseSync;
   launcher: LauncherLike;
   checkProxy: CheckProxyFn;
+  /** Action-sync engine; when omitted the sync routes answer 503. */
+  sync?: ActionSync;
 }
 
 const OS_VALUES: ReadonlySet<string> = new Set(['windows', 'macos', 'linux', 'android']);
@@ -337,6 +342,72 @@ a{color:#f97316;text-decoration:none}
         if (result.ok) return { success: true, data: result };
         // A failed connectivity check is a valid answer, not a transport error.
         return { success: false, data: null, message: result.error };
+      });
+
+      // ---- Action sync -----------------------------------------------------
+
+      const requireSync = (): ActionSync | null => deps.sync ?? null;
+
+      scope.get('/sync/status', async () => {
+        const sync = requireSync();
+        if (!sync) return { success: true, data: { enabled: false, master: null, followers: [] } };
+        return {
+          success: true,
+          data: {
+            enabled: sync.isEnabled(),
+            master: sync.getMaster(),
+            followers: sync.listFollowers()
+          }
+        };
+      });
+
+      scope.post('/sync/start', async (request, reply) => {
+        const sync = requireSync();
+        if (!sync) return fail(reply, 503, 'sync not available');
+        const body = (request.body ?? {}) as Record<string, unknown>;
+        const master = body.master;
+        const followers = body.followers;
+        if (typeof master !== 'string' || master.trim() === '') {
+          return fail(reply, 400, 'master is required');
+        }
+        if (!Array.isArray(followers) || !followers.every((f) => typeof f === 'string')) {
+          return fail(reply, 400, 'followers must be an array of profile ids');
+        }
+        const getContext = deps.launcher.getContext;
+        if (!getContext) return fail(reply, 503, 'launcher contexts not available');
+        const masterCtx = getContext(master);
+        if (!masterCtx) return fail(reply, 409, `master profile ${master} is not running`);
+        sync.clear();
+        sync.setMaster(master, masterCtx as never, (id) =>
+          getContext(id) ? { running: true } : { running: false }
+        );
+        const attached: string[] = [];
+        for (const id of followers as string[]) {
+          if (id === master) continue;
+          const ctx = getContext(id);
+          if (!ctx) continue;
+          sync.attach(id, ctx as never);
+          attached.push(id);
+        }
+        return { success: true, data: { master, followers: attached } };
+      });
+
+      scope.post('/sync/stop', async () => {
+        const sync = requireSync();
+        sync?.clear();
+        return { success: true, data: { stopped: true } };
+      });
+
+      scope.post('/sync/action', async (request, reply) => {
+        const sync = requireSync();
+        if (!sync) return fail(reply, 503, 'sync not available');
+        const body = (request.body ?? {}) as Record<string, unknown>;
+        if (typeof body.type !== 'string' || !SYNC_ACTION_TYPES.has(body.type)) {
+          return fail(reply, 400, `type must be one of ${[...SYNC_ACTION_TYPES].join(', ')}`);
+        }
+        if (typeof body.ts !== 'number') body.ts = Date.now();
+        const delivered = await sync.sync(body as unknown as SyncAction);
+        return { success: true, data: { delivered } };
       });
     },
     { prefix: '/api/v1' }
