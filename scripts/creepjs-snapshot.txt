@@ -1,0 +1,150 @@
+FP ID: 33e1c8b216e8678bcff11bf21fd74069b8504c9ec49c5d861819666e6cddd340
+Fuzzy: 306d80fe552b897dbd1ccaa78e38c7636f780bf70fae158e2b0e000000000000
+560.30 ms
+WebRTCb12ecdc5
+host connection:
+candidate:1195610512 1 udp 2113937151 64862582-2004-48da-876b-d2d8458bc590.local 53692 typ host generation 0 ufrag UkQA network-cost 999
+foundation/ip:
+type & base ip: 1195610512
+blocked
+sdp capabilities: 979f41d7
+stun connection:
+blocked
+devices (1):
+audio
+13.20ms
+Timezoneea81e7d8
+영국 하계 표준시
+Europe, London
+-27028684725000
+-60
+4.20ms
+Intle0e21a1c
+ko-KR
+7월 영국 하계 표준시
+영어(미국)
+2100만
+내년
+0 또는 1
+other
+6.20ms
+Headless7edef54b
+chromium: true
+69% like headless: dc3f650c
+33% headless: a427e0b8
+0% stealth: 0c019315
+platform hints:
+Arial
+0:73:100:91:91
+
+0.50ms
+Resistance4448cb3f
+privacy: unknown
+security: unknown
+mode: unknown
+extension: af823175
+294.20ms
+DedicatedWorkerGlobalScope
+Worker5252a693
+lang/timezone:
+ko-KR (1 미국 달러)
+Europe/London (-60)
+confidence: moderate
+gpu:
+Google Inc. (Intel)
+ANGLE (Intel, Intel(R) UHD Graphics 630 (0x00003E92) Direct3D11 vs_5_0 ps_5_0, D3D11)
+userAgent:
+ua reduction
+Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/137.0.0.0 Safari/537.36
+device:
+Windows (Win32)
+Windows 10 (64-bit)
+cores: 4, ram: 8
+userAgentData:
+Google Chrome 137
+Win32 undefined x86_64
+67.30ms
+WebGL408083bf
+images:25d5cd97
+pixels:0d57db0a50875bab
+params (78): 462ee38b
+exts (64): d3e8ebec
+gpu:
+confidence: moderate
+Google Inc. (Intel)
+ANGLE (Intel, Intel(R) UHD Graphics 630 (0x00003E92) Direct3D11 vs_5_0 ps_5_0, D3D11)
+0.10ms
+Screenf0a6ce34
+...screen: 1536 x 864
+....avail: 1536 x 816
+touch: false
+depth: 24|24
+viewport:
+1536
+1536
+1536
+864
+864
+864
+browser
+landscape
+landscape-primary
+1.25
+39.30ms
+Canvas 2d705131fd
+data: 29314977
+rendering: 15% rgba noise  
+textMetrics:
+0.01429161590576172
+😀☺🤵‍♂️...✌☝☯
+95.20ms
+Fontsa982fff8
+load (14/51): Like undefined
+apps: unsupported
+"DejaVu Sans", "Liberation Mono", "Noto Color Emoji", "Noto Sans Canadian Aboriginal Regular", "Noto Sans Gunjala Gondi Regular", "Noto Sans Masaram Gondi Regular", "Noto Serif Yezidi Regular", Gadugi, Ink Free, Javanese Text, Lucida Console, Myanmar Text, Nirmala UI, Segoe UI Emoji
+
+0.067424994
+😀☺🤵‍♂️...⚕◼☝
+2.10ms
+DOMRect57e383e8
+elems A: 0.26037227672485364
+elems B: 0.26037227672485364
+range A: 0.26037227672485364
+range B: 0.26037227672485364
+0.06749237129211426
+😀☺🤵‍♂️...⚕◼☝
+6.90ms
+SVGRectf108dfe0
+bBox: 0.0712953125
+char: 0.03104569091796875
+subs: 0.02084948425292969
+text: 0.02084948425292969
+0.02784171844482422
+😀☺🤵‍♂️...⚕◼☝
+31.30ms
+Audio0fd3b4b1
+sum: 124.04348731087521
+gain: -20.538288116455078
+freq: 164539.11780166626
+time: 502.59992877283
+trap: 994.9483619542533
+unique: 4989
+data:33a7babc
+copy:f5d91537
+values: dfc44fc6
+Speech
+local (0): blocked
+remote (0): blocked
+lang (0): blocked
+default:
+blocked
+0.40ms
+Mediad0ec3aa6
+mimes (10/12): 91101bd8
+4.10ms
+Features: 113-115+
+JS/DOM: df08a511 (v114-115)
+CSS: 379baeb6 (v114-115)
+Window: eaef5763 (v113-115)
+3.90ms
+CSS Media Que

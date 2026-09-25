@@ -1,0 +1,26 @@
+appId: io.foxmask.app
+productName: Foxmask
+directories:
+  output: release
+files:
+  - out/**
+  - "!**/.vscode/*"
+  - "!src/*"
+  - "!node_modules/*/{CHANGELOG.md,README.md,README,readme.md,readme}"
+asarUnpack:
+  - resources/**
+linux:
+  target:
+    - AppImage
+    - deb
+  category: Network
+mac:
+  target:
+    - dmg
+  category: public.app-category.developer-tools
+win:
+  target:
+    - nsis
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
