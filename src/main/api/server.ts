@@ -149,6 +149,33 @@ export function buildServer(deps: ApiDeps): FastifyInstance {
 
   app.get('/health', async () => ({ ok: true }));
 
+  // Human-friendly landing page: open http://127.0.0.1:<port>/ in any
+  // browser to see that Foxmask is running, with running-profile count.
+  app.get('/', async (_request, reply) => {
+    const list = listProfiles(deps.db, { page: 1, page_size: 1 });
+    const runningCount = listProfiles(deps.db, { page: 1, page_size: 1000 })
+      .rows.filter((row) => deps.launcher.getStatus(row.id).running).length;
+    const html = `<!doctype html>
+<html><head><meta charset="utf-8"><title>Foxmask</title>
+<meta http-equiv="refresh" content="5">
+<style>
+body{background:#0f1115;color:#e6e8eb;font-family:system-ui,sans-serif;
+display:flex;align-items:center;justify-content:center;height:100vh;margin:0}
+.card{background:#1a1d24;border:1px solid #262b35;border-radius:12px;padding:36px 48px;text-align:center}
+h1{margin:0 0 6px;font-size:22px}.fox{font-size:42px}
+.ok{color:#22c55e;font-weight:600}.muted{color:#8b929e;font-size:13px}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#22c55e;
+margin-right:8px;box-shadow:0 0 8px rgba(34,197,94,.7)}
+a{color:#f97316;text-decoration:none}
+</style></head><body><div class="card">
+<div class="fox">🦊</div>
+<h1><span class="dot"></span>Foxmask is running</h1>
+<p class="muted">${runningCount} of ${list.total} profile${list.total === 1 ? '' : 's'} running · API v1</p>
+<p class="muted">Automation endpoints: <a href="/api/v1/profiles">/api/v1/profiles</a> · <a href="/health">/health</a></p>
+</div></body></html>`;
+    reply.type('text/html').send(html);
+  });
+
   app.register(
     async (scope) => {
       // Loopback-only guard for every v1 route.

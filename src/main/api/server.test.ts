@@ -449,3 +449,12 @@ describe('unknown routes & envelope', () => {
     expect(res.json()).toMatchObject({ success: false, message: 'not found' });
   });
 });
+
+describe('GET / (status page)', () => {
+  it('serves html with the running-profile count', async () => {
+    const res = await app.inject({ method: 'GET', url: '/' });
+    expect(res.statusCode).toBe(200);
+    expect(res.headers['content-type']).toContain('text/html');
+    expect(res.body).toContain('Foxmask is running');
+  });
+});
