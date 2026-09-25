@@ -1,6 +1,7 @@
 import net from 'node:net';
 import os from 'node:os';
 import path from 'node:path';
+import fs from 'node:fs';
 import type { BrowserContext, Page } from 'playwright-core';
 import type { Profile } from '../types/profile';
 import type { Fingerprint } from '../types/fingerprint';
@@ -62,7 +63,10 @@ export interface PersistentContextOptions {
 
 /** Root data dir: FOXMASK_HOME overrides ~/.foxmask (tests point it at a tmp dir). */
 export function resolveDataDir(): string {
-  return process.env.FOXMASK_HOME ?? path.join(os.homedir(), '.foxmask');
+  const dir = process.env.FOXMASK_HOME ?? path.join(os.homedir(), '.foxmask');
+  // Created eagerly so db open (which does not mkdir) works on a fresh install.
+  fs.mkdirSync(dir, { recursive: true });
+  return dir;
 }
 
 /** Per-profile persistent user data dir: <data>/profiles/<id>. */
